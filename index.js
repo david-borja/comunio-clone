@@ -11,8 +11,11 @@ const launchOptions = {
   await page.locator('text=ACEPTO')?.click()
   await page.locator('text=Soy mayor de edad')?.click()
 
-  const points = await page.$$eval('.player-list-points', (allItems) => {
-    const data = []
+  const matches = await page.$$eval('.box-match', (allItems) => {
+    const data = {}
+
+    const homeTeamPath = 'a > h2 > div.home'
+    const awayTeamPath = 'a > h2 > div.away'
 
     const homeDomPath = 'ul:first-of-type'
     const awayDomPath = 'ul:last-of-type'
@@ -21,31 +24,69 @@ const launchOptions = {
     const nameDomPath = 'div.row > div.cell > strong'
     const scoreDomPath = 'div.right > div.row > div.cell > span'
 
-    const getPlayersNodeList = (iterator, team) => {
+    const getTeamName = (match, team) => {
+      const namePath = team === 'home' ? homeTeamPath : awayTeamPath
+      return match.querySelector(namePath).innerText
+    }
+
+    const getPlayersNodeList = (iterator, team, attribute) => {
       const teamDomPath = team === 'home' ? homeDomPath : awayDomPath
-      const queryStr = [teamDomPath, playerDomPath, nameDomPath].join(' > ')
+      const attributeDomPath = attribute === 'name' ? nameDomPath : scoreDomPath
+      const queryStr = [teamDomPath, playerDomPath, attributeDomPath].join(
+        ' > '
+      )
       console.log(queryStr)
       return iterator.querySelectorAll(queryStr)
     }
 
-    allItems.forEach((player) => {
-      const homePlayersNodeList = getPlayersNodeList(player, 'home')
-      const awayPlayersNodeList = getPlayersNodeList(player, 'away')
+    allItems.forEach((match) => {
+      const homeTeamName = getTeamName(match, 'home')
+      const awayTeamName = getTeamName(match, 'away')
 
-      const homePlayers = [...homePlayersNodeList].map(
+      const homePlayerNamesNodeList = getPlayersNodeList(match, 'home', 'name')
+      const awayPlayerNamesNodeList = getPlayersNodeList(match, 'away', 'name')
+
+      const homePlayerScoresNodeList = getPlayersNodeList(match, 'home', 'score')
+      const awayPlayerScoresNodeList = getPlayersNodeList(match, 'away', 'score')
+
+      const homePlayerNames = [...homePlayerNamesNodeList].map(
         (playerNode) => playerNode.innerHTML
       )
-      const awayPlayers = [...awayPlayersNodeList].map(
+      const awayPlayerNames = [...awayPlayerNamesNodeList].map(
         (playerNode) => playerNode.innerHTML
       )
 
-      data.push({ homePlayers, awayPlayers })
+      const homePlayerScores = [...homePlayerScoresNodeList].map(
+        (playerNode) => playerNode.innerHTML
+      )
+      const awayPlayerScores = [...awayPlayerScoresNodeList].map(
+        (playerNode) => playerNode.innerHTML
+      )
+
+      const homeLineupNum = homePlayerNames.length
+      const awayLineupNum = awayPlayerNames.length
+
+      const largestLineup = Math.max(homeLineupNum, awayLineupNum)
+
+      const homePlayers = {}
+      const awayPlayers = {}
+
+      for (let i = 0; i < largestLineup; i++) {
+        if (i < homeLineupNum) {
+          homePlayers[homePlayerNames[i]] = homePlayerScores[i]
+        }
+        if (i < awayLineupNum) {
+          awayPlayers[awayPlayerNames[i]] = awayPlayerScores[i]
+        }
+      }
+
+      const matchKey = `${homeTeamName} - ${awayTeamName}`.trim()
+      data[matchKey] = { homePlayers, awayPlayers }
     })
     return data
   })
-  console.log('points', points)
-
-  await page.locator('.boxes-matches').click()
+  console.log('matches', JSON.stringify(matches))
+  // await page.locator('.boxes-matches').click()
   await page.screenshot({ path: 'puntuaciones.png' })
   await browser.close()
 })()
