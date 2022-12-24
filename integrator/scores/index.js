@@ -1,13 +1,27 @@
 const { chromium } = require('playwright')
+const fs = require('fs')
 
-const launchOptions = {
-  headless: false
+function getArgs () {
+  const args = process.argv.slice(2)
+  const params = {}
+  args.forEach((arg) => {
+    const [argKey, argValue] = arg.split('=')
+    params[argKey] = argValue
+  })
+  return params
 }
 
-;(async () => {
+function getRangeArr (length) {
+  return Array.from({ length }, (_, i) => length - i)
+}
+
+async function scrap (matchParam) {
+  const launchOptions = { headless: false }
   const browser = await chromium.launch(launchOptions)
   const page = await browser.newPage()
-  await page.goto('https://www.comuniazo.com/comunio-apuestas/puntos')
+  const SCORES_URL = 'https://www.comuniazo.com/comunio-apuestas/puntos'
+  const url = `${SCORES_URL}?jornada=${matchParam}`
+  await page.goto(url)
   await page.locator('text=ACEPTO')?.click()
   await page.locator('text=Soy mayor de edad')?.click()
 
@@ -35,8 +49,12 @@ const launchOptions = {
       const queryStr = [teamDomPath, playerDomPath, attributeDomPath].join(
         ' > '
       )
-      console.log(queryStr)
       return iterator.querySelectorAll(queryStr)
+    }
+
+    const getScoreFloat = (str) => {
+      const newStr = str.replace(',', '.')
+      return parseFloat(newStr)
     }
 
     allItems.forEach((match) => {
@@ -46,8 +64,16 @@ const launchOptions = {
       const homePlayerNamesNodeList = getPlayersNodeList(match, 'home', 'name')
       const awayPlayerNamesNodeList = getPlayersNodeList(match, 'away', 'name')
 
-      const homePlayerScoresNodeList = getPlayersNodeList(match, 'home', 'score')
-      const awayPlayerScoresNodeList = getPlayersNodeList(match, 'away', 'score')
+      const homePlayerScoresNodeList = getPlayersNodeList(
+        match,
+        'home',
+        'score'
+      )
+      const awayPlayerScoresNodeList = getPlayersNodeList(
+        match,
+        'away',
+        'score'
+      )
 
       const homePlayerNames = [...homePlayerNamesNodeList].map(
         (playerNode) => playerNode.innerHTML
@@ -56,11 +82,11 @@ const launchOptions = {
         (playerNode) => playerNode.innerHTML
       )
 
-      const homePlayerScores = [...homePlayerScoresNodeList].map(
-        (playerNode) => playerNode.innerHTML
+      const homePlayerScores = [...homePlayerScoresNodeList].map((playerNode) =>
+        getScoreFloat(playerNode.innerHTML)
       )
-      const awayPlayerScores = [...awayPlayerScoresNodeList].map(
-        (playerNode) => playerNode.innerHTML
+      const awayPlayerScores = [...awayPlayerScoresNodeList].map((playerNode) =>
+        getScoreFloat(playerNode.innerHTML)
       )
 
       const homeLineupNum = homePlayerNames.length
@@ -85,8 +111,26 @@ const launchOptions = {
     })
     return data
   })
-  console.log('matches', JSON.stringify(matches))
-  // await page.locator('.boxes-matches').click()
-  await page.screenshot({ path: 'puntuaciones.png' })
+
+  const path = `/Users/David/Code/cs50/comuniazo-scraper/integrator/scores/matches/scoresMatch${matchParam}.json`
+  const data = JSON.stringify(matches)
+  const callback = (err) => {
+    if (err) return console.log(err)
+    console.log(`Match week ${matchParam} saved in json!`)
+  }
+  fs.writeFile(path, data, callback)
   await browser.close()
-})()
+}
+
+const args = getArgs()
+const { match: matchArgument, range } = args
+if (!matchArgument) throw new Error('Number of match week must be provided')
+
+const matchWeekParams = range ? getRangeArr(matchArgument) : [matchArgument]
+const scrapOneByOne = async (matchWeekParams) => {
+  for (const matchWeek of matchWeekParams) {
+    await scrap(matchWeek)
+  }
+}
+
+scrapOneByOne(matchWeekParams)
