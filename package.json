@@ -1,19 +1,21 @@
 {
-  "name": "comuniazo-scraper",
+  "name": "comunio-clone",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "http-server"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "playwright": "^1.27.1"
+    "playwright": "1.27.1"
   },
   "devDependencies": {
-    "standard": "^17.0.0"
+    "standard": "17.0.0",
+    "http-server": "14.1.1"
   },
   "eslintConfig": {
     "extends": "standard"
