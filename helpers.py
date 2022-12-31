@@ -27,3 +27,9 @@ def login_required(f):
             return redirect("/login")
         return f(*args, **kwargs)
     return decorated_function
+
+def get_ids_from_tuple(tuple):
+  list = []
+  for el in tuple:
+    list.append(el[0])
+  return list

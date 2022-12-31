@@ -7,7 +7,8 @@ dbSession = psycopg2.connect("dbname='comuniodb' port='5430'");
 dbCursor = dbSession.cursor();
 
 # dbCursor.execute("DROP TABLE teams CASCADE");
-dbCursor.execute("DROP TABLE players CASCADE");
+dbCursor.execute("DROP TABLE users CASCADE");
+# dbCursor.execute("DROP TABLE players CASCADE");
 dbCursor.execute("DROP TABLE matches CASCADE");
 dbCursor.execute("DROP TABLE scores CASCADE");
 
@@ -17,15 +18,23 @@ dbCursor.execute("DROP TABLE scores CASCADE");
 #   )"""
 # );
 
-dbCursor.execute("""CREATE TABLE players (
-    id SERIAL PRIMARY KEY, 
-    name TEXT NOT NULL,
-    position TEXT NOT NULL,
-    team_id INTEGER,
-    user_team_id INTEGER DEFAULT NULL,
-    FOREIGN KEY(team_id) REFERENCES teams(id)
-  )"""
-);
+dbCursor.execute("""CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  username TEXT NOT NULL,
+  hash TEXT NOT NULL,
+  points NUMERIC NOT NULL DEFAULT 0
+)""");
+
+# dbCursor.execute("""CREATE TABLE players (
+#     id SERIAL PRIMARY KEY, 
+#     name TEXT NOT NULL,
+#     position TEXT NOT NULL,
+#     team_id INTEGER,
+#     user_id INTEGER DEFAULT NULL,
+#     FOREIGN KEY(team_id) REFERENCES teams(id),
+#     FOREIGN KEY(user_id) REFERENCES users(id)
+#   )"""
+# );
 
 dbCursor.execute("""CREATE TABLE matches (
     id SERIAL PRIMARY KEY,

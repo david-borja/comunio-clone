@@ -5,13 +5,13 @@ from flask_session import Session
 from tempfile import mkdtemp
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import login_required, apology
+from helpers import login_required, apology, get_ids_from_tuple
 
 sys.path.append('./controllers') 
 from matches import insert_match, get_match_id
-from players import insert_player, get_player_id
+from players import insert_player, get_player_id, update_player_user_id, get_free_players
 from scores import insert_score
-from users import get_user_by_name
+from users import get_user_by_name, insert_user
 
 # Configure application
 app = Flask(__name__)
@@ -67,7 +67,7 @@ def login():
         # Ensure password was submitted
         elif not request.form.get("password"):
             return apology("must provide password")
-            
+
         # Query database username
         rows = get_user_by_name(dbCursor, request.form.get("username"))
 
@@ -84,3 +84,59 @@ def login():
     # User reached route via GET (as by clicking a link or via redirect)
     else:
       return render_template("login.html")
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+  if request.method == "POST":
+      username = request.form.get("username")
+      password = request.form.get("password")
+      confirmation = request.form.get("confirmation")
+
+      regis_info = {
+          "username": username,
+          "password": password,
+          "confirmation": confirmation
+      }
+
+      for field in regis_info:
+          field_value = regis_info[field]
+          if not field_value:
+              return apology('must provide {}'.format(field))
+
+          rows = get_user_by_name(dbCursor, username)
+          if len(rows):
+            return apology('user already exists')
+          
+          # Passwords do not match
+          if password != confirmation:
+            return apology("passwords do not match")
+          
+          user_obj = {
+            "username": username,
+            "password": generate_password_hash(password, method, salt_len)
+          }
+          insert_user(dbCursor, user_obj)
+          dbSession.commit()
+          user = get_user_by_name(dbCursor, username)
+
+          user_id = user[0][0]
+
+          # Remember which user has logged in
+          session["user_id"] = user_id
+
+          # Assign players
+          free_goalkeepers = get_free_players(dbCursor, 'Goalkeeper', 2)
+          free_midfielders = get_free_players(dbCursor, 'Midfielder', 6)
+          free_defenders = get_free_players(dbCursor, 'Defender', 6)
+          free_forwards = get_free_players(dbCursor, 'Forward', 3)
+          free_player_ids = get_ids_from_tuple(free_goalkeepers) + get_ids_from_tuple(free_midfielders) + get_ids_from_tuple(free_defenders) + get_ids_from_tuple(free_forwards)
+
+          for player_id in free_player_ids:
+            update_player_user_id(dbCursor, player_id, user_id)
+            dbSession.commit()
+          # update_player_user_id(dbCursor, 10, user_id)
+          # dbSession.commit()
+          # Redirect user to home page
+          return redirect("/")
+  else:
+    return render_template("register.html")
