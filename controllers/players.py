@@ -2,7 +2,6 @@ def insert_player(db, player):
   name = player["name"]
   team_id = player["team_id"]
   position = player["position"]
-
   db.execute("INSERT INTO players (name, team_id, position) VALUES(%s, %s, %s)", (name, team_id, position));
 
 def get_player_id(db, player):
