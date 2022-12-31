@@ -12,8 +12,14 @@ function getArgs () {
 }
 
 function getRangeArr (length) {
-  return Array.from({ length }, (_, i) => length - i)
+  return Array.from({ length }, (_, i) => i + 1)
 }
+
+const args = getArgs()
+const { match: matchArgument, range } = args
+if (!matchArgument) throw new Error('Number of match week must be provided. Example: match=9')
+
+const matchWeekParams = range ? getRangeArr(matchArgument) : [matchArgument]
 
 async function scrap (matchParam) {
   const launchOptions = { headless: false }
@@ -37,15 +43,29 @@ async function scrap (matchParam) {
     const playerDomPath = 'li > a'
     const nameDomPath = 'div.row > div.cell > strong'
     const scoreDomPath = 'div.right > div.row > div.cell > span'
+    const positionDomPath = 'span'
 
     const getTeamName = (match, team) => {
       const namePath = team === 'home' ? homeTeamPath : awayTeamPath
       return match.querySelector(namePath).innerText
     }
 
+    const attributes = {
+      name: nameDomPath,
+      score: scoreDomPath,
+      position: positionDomPath
+    }
+
+    const positions = {
+      'pos-1': 'Goalkeeper',
+      'pos-2': 'Defender',
+      'pos-3': 'Midfielder',
+      'pos-4': 'Forward'
+    }
+
     const getPlayersNodeList = (iterator, team, attribute) => {
       const teamDomPath = team === 'home' ? homeDomPath : awayDomPath
-      const attributeDomPath = attribute === 'name' ? nameDomPath : scoreDomPath
+      const attributeDomPath = attributes[attribute]
       const queryStr = [teamDomPath, playerDomPath, attributeDomPath].join(
         ' > '
       )
@@ -75,6 +95,17 @@ async function scrap (matchParam) {
         'score'
       )
 
+      const homePlayerPositionsNodeList = getPlayersNodeList(
+        match,
+        'home',
+        'position'
+      )
+      const awayPlayerPositionsNodeList = getPlayersNodeList(
+        match,
+        'away',
+        'position'
+      )
+
       const homePlayerNames = [...homePlayerNamesNodeList].map(
         (playerNode) => playerNode.innerHTML
       )
@@ -89,6 +120,22 @@ async function scrap (matchParam) {
         getScoreFloat(playerNode.innerHTML)
       )
 
+      const homePlayerPositions = [...homePlayerPositionsNodeList].map(
+        (playerNode) => {
+          const positionClassName = playerNode.className.split(' ')[1]
+          const position = positions[positionClassName]
+          return position
+        }
+      )
+
+      const awayPlayerPositions = [...awayPlayerPositionsNodeList].map(
+        (playerNode) => {
+          const positionClassName = playerNode.className.split(' ')[1]
+          const position = positions[positionClassName]
+          return position
+        }
+      )
+
       const homeLineupNum = homePlayerNames.length
       const awayLineupNum = awayPlayerNames.length
 
@@ -99,10 +146,14 @@ async function scrap (matchParam) {
 
       for (let i = 0; i < largestLineup; i++) {
         if (i < homeLineupNum) {
-          homePlayers[homePlayerNames[i]] = homePlayerScores[i]
+          const score = homePlayerScores[i]
+          const position = homePlayerPositions[i]
+          homePlayers[homePlayerNames[i]] = { position, score }
         }
         if (i < awayLineupNum) {
-          awayPlayers[awayPlayerNames[i]] = awayPlayerScores[i]
+          const score = awayPlayerScores[i]
+          const position = awayPlayerPositions[i]
+          awayPlayers[awayPlayerNames[i]] = { position, score }
         }
       }
 
@@ -111,8 +162,7 @@ async function scrap (matchParam) {
     })
     return data
   })
-
-  const path = `/Users/David/Code/cs50/comuniazo-scraper/integrator/scores/matches/scoresMatch${matchParam}.json`
+  const path = `/Users/David/Code/cs50/comunio-clone/integrator/scores/matches/scoresMatch${matchParam}.json`
   const data = JSON.stringify(matches)
   const callback = (err) => {
     if (err) return console.log(err)
@@ -122,11 +172,6 @@ async function scrap (matchParam) {
   await browser.close()
 }
 
-const args = getArgs()
-const { match: matchArgument, range } = args
-if (!matchArgument) throw new Error('Number of match week must be provided')
-
-const matchWeekParams = range ? getRangeArr(matchArgument) : [matchArgument]
 const scrapOneByOne = async (matchWeekParams) => {
   for (const matchWeek of matchWeekParams) {
     await scrap(matchWeek)
