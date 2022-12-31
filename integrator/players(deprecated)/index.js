@@ -16,10 +16,10 @@ const launchOptions = {
 
     const teamKeys = {
       1: 'Athletic',
-      2: 'Atletico Madrid',
+      2: 'Atlético',
       3: 'Barcelona',
       4: 'Betis',
-      5: 'Celta de Vigo',
+      5: 'Celta',
       7: 'Espanyol',
       8: 'Getafe',
       11: 'Mallorca',
@@ -27,14 +27,14 @@ const launchOptions = {
       13: 'Real Sociedad',
       17: 'Sevilla',
       18: 'Valencia',
-      19: 'Villareal',
+      19: 'Villarreal',
       21: 'Valladolid',
-      22: 'Almeria',
+      22: 'Almería',
       15: 'Real Madrid',
       70: 'Rayo Vallecano',
       75: 'Elche',
       97: 'Girona',
-      105: 'Cadiz'
+      105: 'Cádiz'
     }
 
     const positions = {
