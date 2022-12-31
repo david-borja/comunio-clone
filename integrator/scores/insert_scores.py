@@ -54,6 +54,7 @@ for match in scores_json:
         if rows_num == 0:
           player_obj["position"] = position
           insert_player(dbCursor, player_obj)
+          print("Inserted PLAYER-TEAM pair. Player name {} team_id {}".format(player, team_id))
           del player_obj["position"]
         player_id = get_player_id(dbCursor, player_obj).fetchone()[0]
         score_obj = {
