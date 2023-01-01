@@ -7,7 +7,32 @@
 {% block main %}
 
 <table class="table table-striped">
-   
+    <thead>
+        <tr>
+            <th class="text-start">Position</th>
+            <th class="text-start">Team</th>
+            <th class="text-start">Name</th>
+            <th class="text-end">Last Match</th>
+            <th class="text-end">Avg</th>
+        </tr>
+    </thead>
+    <tbody>
+            {% for player in players %}
+            <tr>
+                <td class="text-start">{{ player["position"] }}</td>
+                <td class="text-start"><img src="{{url_for('static', filename=player["team_pic"])}}" loading="lazy" width="26" height="26"/> {{ player["team"]}}</td>
+                <td class="text-start">{{ player["name"] }}</td>
+                <td class="text-end">{{ player["last_score"] }}</td>
+                <td class="text-end">{{ player["avg"]}}</td>
+            </tr>
+            {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <td class="border-0 fw-bold text-end" colspan="4">Last Match</td>
+            <td class="border-0 text-end">{{ last_match_total }}</td>
+        </tr>
+    </tfoot>
 </table>
 
 {% endblock %}

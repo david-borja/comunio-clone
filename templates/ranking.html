@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+
+{% block title %}
+  Ranking
+{% endblock %}
+
+{% block main %}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th class="text-start">Rank Position</th>
+            <th class="text-start">User</th>
+            <th class="text-end">Points</th>
+        </tr>
+    </thead>
+    <tbody>
+            {% for user in ranked_users %}
+            <tr>
+                <td class="text-start">{{ user["rank"] }}</td>
+                <td class="text-start">{{ user["name"] }}</td>
+                <td class="text-end">{{ user["points"] }}</td>
+            </tr>
+            {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

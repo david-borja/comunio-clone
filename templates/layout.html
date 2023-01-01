@@ -31,7 +31,11 @@
       <div class="container-fluid">
         <a class="navbar-brand" href="/"
           ><span class="dark-sky">C</span><span class="dark-pink">O</span
-          ><span class="dark-sky">M</span><span class="dark-pink">U</span><span class="dark-sky">N</span><span class="dark-pink">I</span><span class="dark-sky">O</span><span> </span><span class="lime">C</span><span class="lime">L</span><span>⚽</span><span class="lime">N</span><span class="lime">E</span>
+          ><span class="dark-sky">M</span><span class="dark-pink">U</span
+          ><span class="dark-sky">N</span><span class="dark-pink">I</span
+          ><span class="dark-sky">O</span><span> </span
+          ><span class="lime">C</span><span class="lime">L</span><span>⚽</span
+          ><span class="lime">N</span><span class="lime">E</span>
         </a>
         <button
           aria-controls="navbar"
@@ -42,7 +46,46 @@
           data-bs-toggle="collapse"
           type="button"
         >
+          <span class="navbar-toggler-icon"></span>
         </button>
+        <div class="collapse navbar-collapse" id="navbar">
+          {% if session["user_id"] %}
+          <ul class="navbar-nav me-auto mt-2">
+            <li class="nav-item">
+              <a class="nav-link" href="/ranking">Ranking</a>
+            </li>
+          </ul>
+          <ul class="navbar-nav ms-auto mt-2">
+            <li class="nav-item">
+              <a class="nav-link" href="/logout">Log Out</a>
+            </li>
+          </ul>
+          {% else %}
+          <ul class="navbar-nav ms-auto mt-2">
+            <li class="nav-item">
+              <a class="nav-link" href="/register">Register</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/login">Log In</a>
+            </li>
+          </ul>
+          {% endif %}
+        </div>
+      </div>
+    </nav>
+
+    {% if get_flashed_messages() %}
+    <header>
+      <div class="alert alert-primary mb-0 text-center" role="alert">
+        {{ get_flashed_messages() | join(" ") }}
+      </div>
+    </header>
+    {% endif %}
+
+    <main class="container container-fluid py-5 text-center">
+      {% block main %}{% endblock %}
+    </main>
+
     <footer class="mb-5 small text-center text-muted">
       Data extracted from <a href="https://www.comuniazo.com/">COMUNIAZO</a>
     </footer>

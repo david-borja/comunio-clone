@@ -8,7 +8,7 @@ dbCursor = dbSession.cursor();
 
 # dbCursor.execute("DROP TABLE teams CASCADE");
 dbCursor.execute("DROP TABLE users CASCADE");
-# dbCursor.execute("DROP TABLE players CASCADE");
+dbCursor.execute("DROP TABLE players CASCADE");
 dbCursor.execute("DROP TABLE matches CASCADE");
 dbCursor.execute("DROP TABLE scores CASCADE");
 
@@ -25,16 +25,18 @@ dbCursor.execute("""CREATE TABLE users (
   points NUMERIC NOT NULL DEFAULT 0
 )""");
 
-# dbCursor.execute("""CREATE TABLE players (
-#     id SERIAL PRIMARY KEY, 
-#     name TEXT NOT NULL,
-#     position TEXT NOT NULL,
-#     team_id INTEGER,
-#     user_id INTEGER DEFAULT NULL,
-#     FOREIGN KEY(team_id) REFERENCES teams(id),
-#     FOREIGN KEY(user_id) REFERENCES users(id)
-#   )"""
-# );
+dbCursor.execute("""CREATE TABLE players (
+    id SERIAL PRIMARY KEY, 
+    name TEXT NOT NULL,
+    position TEXT NOT NULL,
+    position_id INTEGER,
+    team_id INTEGER,
+    user_id INTEGER DEFAULT NULL,
+    listed BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY(team_id) REFERENCES teams(id),
+    FOREIGN KEY(user_id) REFERENCES users(id)
+  )"""
+);
 
 dbCursor.execute("""CREATE TABLE matches (
     id SERIAL PRIMARY KEY,

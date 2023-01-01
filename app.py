@@ -5,13 +5,13 @@ from flask_session import Session
 from tempfile import mkdtemp
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import login_required, apology, get_ids_from_tuple
+from helpers import login_required, apology, get_ids_from_tuple, get_team_img_param, get_team_name
 
 sys.path.append('./controllers') 
 from matches import insert_match, get_match_id
-from players import insert_player, get_player_id, update_player_user_id, get_free_players
-from scores import insert_score
-from users import get_user_by_name, insert_user
+from players import insert_player, get_player_id, update_player_user_id, get_free_players, get_user_players
+from scores import insert_score, get_player_avg, get_last_match_score
+from users import get_user_by_name, insert_user, update_user_points, compute_user_points, get_all_user_ids, get_ranked_users
 
 # Configure application
 app = Flask(__name__)
@@ -48,7 +48,30 @@ def after_request(response):
 def index():
     user_id = session["user_id"]
     if user_id:
-      return render_template("index.html")
+      rows = get_user_players(dbCursor, user_id)
+      players = []
+      last_match_total = 0
+      for row in rows:
+        name = row[1]
+        team = get_team_name(row[4])
+        team_path = get_team_img_param(team)
+        team_file_path = "{}.png".format(str(team_path))
+        position = row[2]
+        rows = get_player_avg(dbCursor, name)
+        avg = rows[0][0]
+        last_score = get_last_match_score(dbCursor, name)[0][0]
+        last_match_total += last_score
+        player = {
+          'name': name,
+          'team': team,
+          'team_pic': team_file_path,
+          'position': position,
+          'avg': "{:.1f}".format(avg),
+          'last_score': last_score
+        }
+        players.append(player)
+        print(last_match_total)
+      return render_template("index.html", players=players, last_match_total=last_match_total)
     else:
       return redirect("/login")
 
@@ -125,18 +148,51 @@ def register():
           session["user_id"] = user_id
 
           # Assign players
-          free_goalkeepers = get_free_players(dbCursor, 'Goalkeeper', 2)
-          free_midfielders = get_free_players(dbCursor, 'Midfielder', 6)
-          free_defenders = get_free_players(dbCursor, 'Defender', 6)
-          free_forwards = get_free_players(dbCursor, 'Forward', 3)
+          free_goalkeepers = get_free_players(dbCursor, 'Goalkeeper', 1)
+          free_midfielders = get_free_players(dbCursor, 'Midfielder', 4)
+          free_defenders = get_free_players(dbCursor, 'Defender', 4)
+          free_forwards = get_free_players(dbCursor, 'Forward', 2)
           free_player_ids = get_ids_from_tuple(free_goalkeepers) + get_ids_from_tuple(free_midfielders) + get_ids_from_tuple(free_defenders) + get_ids_from_tuple(free_forwards)
 
           for player_id in free_player_ids:
             update_player_user_id(dbCursor, player_id, user_id)
             dbSession.commit()
-          # update_player_user_id(dbCursor, 10, user_id)
-          # dbSession.commit()
-          # Redirect user to home page
           return redirect("/")
   else:
     return render_template("register.html")
+  
+@app.route("/logout")
+def logout():
+    """Log user out"""
+
+    # Forget any user_id
+    session.clear()
+
+    # Redirect user to login form
+    return redirect("/")
+
+@app.route("/ranking")
+@login_required
+def ranking():
+  rows = get_all_user_ids(dbCursor)
+  for row in rows:
+    user_id = row[0]
+    points = compute_user_points(dbCursor, user_id)[0][0]
+    update_user_points(dbCursor, user_id, points)
+    dbSession.commit()
+  rows = get_ranked_users(dbCursor)
+  ranked_users = []
+  rank_pos = 0
+  for row in rows:
+    name = row[1]
+    points = "{:.1f}".format(row[2])
+    rank = rank_pos + 1
+    rank_pos += 1
+
+    user = {
+      "name": name,
+      "points": points,
+      "rank": rank
+    }
+    ranked_users.append(user)
+  return render_template("ranking.html", ranked_users=ranked_users)

@@ -23,6 +23,13 @@ dbSession = psycopg2.connect("dbname='comuniodb' port='5430'");
 # Open a database cursor
 dbCursor = dbSession.cursor();
 
+positions = {
+  'Goalkeeper': 1,
+  'Defender': 2,
+  'Midfielder': 3,
+  'Forward': 4
+}
+
 for match in scores_json:
   teams = match.split(' - ')
   home_team = teams[0]
@@ -45,6 +52,7 @@ for match in scores_json:
       for player in players:
         score = players[player]['score']
         position = players[player]['position']
+        position_id = positions[position]
         team_id = home_team_index if team == 'homePlayers' else away_team_index
         player_obj = {
           "name": player,
@@ -53,9 +61,11 @@ for match in scores_json:
         rows_num = get_player_id(dbCursor, player_obj).rowcount
         if rows_num == 0:
           player_obj["position"] = position
+          player_obj["position_id"] = position_id
           insert_player(dbCursor, player_obj)
           print("Inserted PLAYER-TEAM pair. Player name {} team_id {}".format(player, team_id))
           del player_obj["position"]
+          del player_obj["position_id"]
         player_id = get_player_id(dbCursor, player_obj).fetchone()[0]
         score_obj = {
           "match_id": match_id,
