@@ -124,9 +124,6 @@ flask run
     - Users can go to Ranking to see how well are performing their players related to other users'. It shows all the users sorted by total points in the season.
     - This ranking and total points updates automatically after every match week manual integration.
 
-## YOUTUBE VIDEO
-  [Video](https://youtu.be/lAi-exOptAs)
-
 ## FINAL CONSIDERATIONS
 This Final Project is completely independent from cs50 Codespace, implying way more environment configuration and tool research to put together different technologies.
 Moreover, it was demanding to obtain the necessary data through a self-made web scraper.
